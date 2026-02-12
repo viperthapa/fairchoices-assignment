@@ -5,7 +5,6 @@ from core.views import CountryCreateAPIView
 
 router = routers.DefaultRouter()
 
-# router.register(r'countries', CountryViewSet)
 router.register("users", UserViewSet,basename="user")
 router.register("projects", ProjectViewSet)
 

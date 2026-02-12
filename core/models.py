@@ -41,6 +41,7 @@ class User(AbstractUser):
         on_delete=models.PROTECT, 
         related_name='users',
         null=True,
+        blank=True
     )
     groups = models.ManyToManyField(
         Group,
