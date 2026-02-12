@@ -1,20 +1,21 @@
 repos:
-  - repo: https://github.com/pycqa/isort
-    rev: 7.0.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0  # Use latest stable version
     hooks:
-      - id: isort
-        name: isort (python imports)
-        args: ["--profile", "black"]
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
 
   - repo: https://github.com/psf/black
-    rev: 25.9.0
+    rev: 23.3.0  # Use latest Black version
     hooks:
       - id: black
-        name: black (code formatter)
+        language_version: python3
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.0
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
     hooks:
-      - id: ruff
-        name: ruff (linter)
-        args: [--fix]
+      - id: isort
+        name: Sort imports
+        language_version: python3

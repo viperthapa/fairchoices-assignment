@@ -1,6 +1,8 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from .models import Project, AuditLog
+
+from .models import AuditLog, Project
+
 
 @receiver(post_save, sender=Project)
 def project_saved(sender, instance, created, **kwargs):
@@ -9,7 +11,7 @@ def project_saved(sender, instance, created, **kwargs):
         action="CREATE" if created else "UPDATE",
         model_name="Project",
         object_id=instance.id,
-        changes={"title": instance.title, "status": instance.status}
+        changes={"title": instance.title, "status": instance.status},
     )
 
 

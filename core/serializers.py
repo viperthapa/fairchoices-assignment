@@ -1,13 +1,9 @@
-from rest_framework import serializers
-from .models import User, Project, Country
-
-
-from rest_framework import serializers
 from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User
+from .models import Country, Project, User
 
 
 class LoginSerializer(serializers.Serializer):
@@ -19,9 +15,7 @@ class LoginSerializer(serializers.Serializer):
         password = attrs.get("password")
 
         user = authenticate(
-            request=self.context.get("request"),
-            username=email,
-            password=password
+            request=self.context.get("request"), username=email, password=password
         )
 
         if not user:
@@ -41,66 +35,62 @@ class LoginSerializer(serializers.Serializer):
                 "email": user.email,
                 "role": user.role,
                 "country": user.country.name if user.country else None,
-            }
+            },
         }
 
 
-
 class CountrySerializer(serializers.ModelSerializer):
-    name = serializers.CharField(
-        required=True
-    )
+    name = serializers.CharField(required=True)
     capital = serializers.CharField(required=True)
 
     class Meta:
         model = Country
-        fields = ['id', 'name', 'capital']
-        read_only_fields = ['id']
-
+        fields = ["id", "name", "capital"]
+        read_only_fields = ["id"]
 
     def validate_name(self, name):
         queryset = Country.objects.filter(name__iexact=name)
-        
+
         if self.instance:
             queryset = queryset.exclude(pk=self.instance.pk)
-        
+
         if queryset.exists():
             raise serializers.ValidationError(
-                f"A country with this name already exists."
+                "A country with this name already exists."
             )
-        
+
         return name
 
 
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True,required=True)
+    password = serializers.CharField(write_only=True, required=True)
     confirm_password = serializers.CharField(write_only=True, required=True)
-    
+
     username = serializers.CharField(
         required=True,
         validators=[
             UniqueValidator(
                 queryset=User.objects.all(),
-                message="A user with this username already exists."
+                message="A user with this username already exists.",
             )
-        ]
+        ],
     )
-    
+
     email = serializers.EmailField(
         required=True,
         validators=[
             UniqueValidator(
                 queryset=User.objects.all(),
-                message="A user with this email address already exists."
+                message="A user with this email address already exists.",
             )
-        ]
+        ],
     )
 
     country_id = serializers.PrimaryKeyRelatedField(
         queryset=Country.objects.all(),
         source="country",
         write_only=True,
-        required=False
+        required=False,
     )
 
     class Meta:
@@ -113,19 +103,17 @@ class UserSerializer(serializers.ModelSerializer):
             "confirm_password",
             "role",
             "country",
-            "country_id"
+            "country_id",
         ]
 
     def validate(self, data):
-        password = data.get('password')
-        confirm_password = data.pop('confirm_password', None)
+        password = data.get("password")
+        confirm_password = data.pop("confirm_password", None)
         if password != confirm_password:
-            raise serializers.ValidationError({
-                'error': "Passwords do not match."
-            })
-        
+            raise serializers.ValidationError({"error": "Passwords do not match."})
+
         return data
-    
+
     def create(self, validated_data):
         password = validated_data.pop("password")
         country_id = validated_data.pop("country_id", None)
@@ -143,14 +131,14 @@ class ProjectSerializer(serializers.ModelSerializer):
         queryset=Country.objects.all(),
         source="country",
         write_only=True,
-        required=False
+        required=False,
     )
 
     class Meta:
         model = Project
         fields = "__all__"
         read_only_fields = ["created_by", "created_at", "updated_at"]
-    
+
     def create(self, validated_data):
         country_id = validated_data.pop("country_id", None)
         if country_id:
@@ -161,9 +149,9 @@ class ProjectSerializer(serializers.ModelSerializer):
         country_id = validated_data.pop("country_id", None)
         if country_id:
             instance.country = Country.objects.filter(id=country_id).first()
-        
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        
+
         instance.save()
         return instance

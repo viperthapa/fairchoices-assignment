@@ -148,9 +148,9 @@ fairchoices-assignment/
 │   └── ...
 │
 ├── workflow/                 # Workflow management modules
-│   ├── settings.py/          
-│   ├── urls.py          
-│   ├── wsgi.py            
+│   ├── settings.py/
+│   ├── urls.py
+│   ├── wsgi.py
 │   └── ...
 │
 ├── .env.example             # Example environment variables

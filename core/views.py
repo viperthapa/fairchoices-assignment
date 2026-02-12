@@ -3,37 +3,29 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-from django.shortcuts import render
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
-from .models import AuditLog, Project
-from .serializers import ProjectSerializer,UserSerializer
-from .permissions import IsSuperAdmin, IsCountryAdmin, IsSuperAdminOrCountryAdmin
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .serializers import LoginSerializer
-from rest_framework.permissions import IsAuthenticated
-from .serializers import CountrySerializer
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-
 from django.contrib.auth import get_user_model
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
+
+from .models import AuditLog, Project
+from .permissions import IsSuperAdminOrCountryAdmin
+from .serializers import (CountrySerializer, LoginSerializer,
+                          ProjectSerializer, UserSerializer)
 
 User = get_user_model()
 
 # Create your views here.
 
+
 class LoginView(APIView):
     permission_classes = []  # Allow anyone to login
 
     def post(self, request):
-        serializer = LoginSerializer(
-            data=request.data,
-            context={"request": request}
-        )
+        serializer = LoginSerializer(data=request.data, context={"request": request})
 
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
@@ -51,9 +43,8 @@ class ProjectViewSet(ModelViewSet):
             object_id=instance.id,
             object_repr=str(instance),
             action=action,
-            changes=self.request.data
+            changes=self.request.data,
         )
-    
 
     def perform_create(self, serializer):
         project = serializer.save(created_by=self.request.user)
@@ -65,17 +56,16 @@ class ProjectViewSet(ModelViewSet):
 
     def perform_destroy(self, instance):
         self._create_audit_log(instance, "delete")
-        
+
         # instance.is_deleted = True #perform soft delete
-        instance.delete() # Perform hard delete
+        instance.delete()  # Perform hard delete
         logger.info(f"Hard deleted instance with ID: {instance.id}")
-   
+
 
 class UserViewSet(ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
     queryset = User.objects.all()
-
 
     def get_queryset(self):
         user = self.request.user
@@ -95,20 +85,20 @@ class UserViewSet(ModelViewSet):
         if not creator.can_create_user(target_country):
             raise PermissionDenied(
                 detail="You do not have permission to create this user.",
-                code=status.HTTP_403_FORBIDDEN
-            ) 
-             
+                code=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer.save()
 
 
 class CountryCreateAPIView(APIView):
     """Simplified version for basic country creation"""
+
     permission_classes = [IsAuthenticated, IsSuperAdminOrCountryAdmin]
-    
+
     def post(self, request):
         serializer = CountrySerializer(data=request.data)
-        
+
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
-        
